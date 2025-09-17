@@ -126,7 +126,7 @@ const ImageAnnotation = ({ selectedImage }) => {
       height: pos.y - currentRect.y
     };
     setCurrentRect(newRect);
-    setTimeout(() => drawAnnotations(), 100);
+    setTimeout(() => drawAnnotations(), 0);
   };
 
   const handleMouseUp = (e) => {
@@ -164,7 +164,7 @@ const ImageAnnotation = ({ selectedImage }) => {
       deleteAnnotation(selectedImage.path, annotation.id);
       // 强制重新绘制
       setForceRedraw(prev => prev + 1);
-      setTimeout(() => drawAnnotations(), 100);
+      setTimeout(() => drawAnnotations(), 0);
     }
   };
 
@@ -179,19 +179,19 @@ const ImageAnnotation = ({ selectedImage }) => {
       
       // 强制重新绘制
       setForceRedraw(prev => prev + 1);
-      setTimeout(() => drawAnnotations(), 100);
+      setTimeout(() => drawAnnotations(), 0);
     }
     setShowCategoryModal(false);
     setPendingAnnotation(null);
     // 立即重绘以清除待确认的标注
-    setTimeout(() => drawAnnotations(), 100);
+    setTimeout(() => drawAnnotations(), 0);
   };
 
   const handleCancelAnnotation = () => {
     setShowCategoryModal(false);
     setPendingAnnotation(null);
     // 立即重绘以清除待确认的标注
-    setTimeout(() => drawAnnotations(), 100);
+    setTimeout(() => drawAnnotations(), 0);
   };
 
   const exportAnnotations = () => {
@@ -221,15 +221,6 @@ const ImageAnnotation = ({ selectedImage }) => {
     <div className="annotation-area">
       <div className="annotation-header">
         <h3>{selectedImage.name}</h3>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button
-            className="btn btn-success"
-            onClick={exportAnnotations}
-            disabled={!selectedImage.annotations || selectedImage.annotations.length === 0}
-          >
-            导出标注
-          </button>
-        </div>
       </div>
 
       <div className="annotation-content">
@@ -271,18 +262,6 @@ const ImageAnnotation = ({ selectedImage }) => {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
           />
-        </div>
-
-
-        <div style={{ 
-          marginTop: '20px', 
-          padding: '10px', 
-          backgroundColor: '#d1ecf1', 
-          border: '1px solid #bee5eb', 
-          borderRadius: '4px',
-          color: '#0c5460'
-        }}>
-          点击并拖拽图像来创建标注框，完成后选择类别
         </div>
       </div>
 
