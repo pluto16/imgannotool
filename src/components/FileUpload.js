@@ -70,8 +70,6 @@ const FileUpload = () => {
 
   return (
     <div className="file-upload">
-      <h3>上传JSON文件</h3>
-      <p>JSON文件应包含PNG图像路径数组</p>
       <div className="file-input">
         <input
           ref={fileInputRef}
@@ -86,16 +84,6 @@ const FileUpload = () => {
         >
           选择JSON文件
         </button>
-      </div>
-      <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-        支持的JSON格式示例：
-        <pre style={{ marginTop: '5px', fontSize: '11px', background: '#f5f5f5', padding: '5px', borderRadius: '3px' }}>
-{`["path/to/image1.png", "path/to/image2.png"]
-或
-{"images": ["path/to/image1.png", "path/to/image2.png"]}
-或
-{"paths": ["path/to/image1.png", "path/to/image2.png"]}`}
-        </pre>
       </div>
     </div>
   );

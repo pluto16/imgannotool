@@ -35,7 +35,6 @@ function MainPage() {
   return (
     <div className="container">
       <div className="header">
-        <h1>PNG图像标注工具</h1>
         <FileUpload />
       </div>
       

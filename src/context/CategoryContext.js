@@ -3,7 +3,18 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 const CategoryContext = createContext();
 
 const initialState = {
-  categories: []
+  categories: [
+    {
+      id: 1,
+      name: '刀具',
+      color: '#dc3545'
+    },
+    {
+      id: 2,
+      name: '枪械',
+      color: '#007bff'
+    }
+  ]
 };
 
 const categoryReducer = (state, action) => {
@@ -15,7 +26,7 @@ const categoryReducer = (state, action) => {
         ...state, 
         categories: [...state.categories, { 
           ...action.payload, 
-          id: Date.now(),
+          id: Math.max(...state.categories.map(cat => cat.id), 0) + 1,
           color: action.payload.color || '#007bff'
         }]
       };
