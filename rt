@@ -1,0 +1,471 @@
+[33mtag v1.0.0[m
+Tagger: liaoyuhua <pluto4332@gmail.com>
+Date:   Wed Sep 17 12:58:21 2025 +0800
+
+版本1.0.0: 基础PNG图像标注工具功能完成
+
+[33mcommit cde9ceb31670c2a15eebf4bac745dc6e21806f8d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;33mtag: [m[1;33mv1.0.0[m[33m)[m
+Author: liaoyuhua <pluto4332@gmail.com>
+Date:   Wed Sep 17 12:56:18 2025 +0800
+
+    Initial commit: PNG图像标注工具
+
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mnew file mode 100644[m
+[1mindex 0000000..4432533[m
+[1m--- /dev/null[m
+[1m+++ b/.gitignore[m
+[36m@@ -0,0 +1,88 @@[m
+[32m+[m[32m# Dependencies[m
+[32m+[m[32mnode_modules/[m
+[32m+[m[32mnpm-debug.log*[m
+[32m+[m[32myarn-debug.log*[m
+[32m+[m[32myarn-error.log*[m
+[32m+[m
+[32m+[m[32m# Production build[m
+[32m+[m[32mbuild/[m
+[32m+[m[32mdist/[m
+[32m+[m
+[32m+[m[32m# Environment variables[m
+[32m+[m[32m.env[m
+[32m+[m[32m.env.local[m
+[32m+[m[32m.env.development.local[m
+[32m+[m[32m.env.test.local[m
+[32m+[m[32m.env.production.local[m
+[32m+[m
+[32m+[m[32m# IDE and editor files[m
+[32m+[m[32m.vscode/[m
+[32m+[m[32m.idea/[m
+[32m+[m[32m*.swp[m
+[32m+[m[32m*.swo[m
+[32m+[m[32m*~[m
+[32m+[m
+[32m+[m[32m# OS generated files[m
+[32m+[m[32m.DS_Store[m
+[32m+[m[32m.DS_Store?[m
+[32m+[m[32m._*[m
+[32m+[m[32m.Spotlight-V100[m
+[32m+[m[32m.Trashes[m
+[32m+[m[32mehthumbs.db[m
+[32m+[m[32mThumbs.db[m
+[32m+[m
+[32m+[m[32m# Logs[m
+[32m+[m[32mlogs[m
+[32m+[m[32m*.log[m
+[32m+[m
+[32m+[m[32m# Runtime data[m
+[32m+[m[32mpids[m
+[32m+[m[32m*.pid[m
+[32m+[m[32m*.seed[m
+[32m+[m[32m*.pid.lock[m
+[32m+[m
+[32m+[m[32m# Coverage directory used by tools like istanbul[m
+[32m+[m[32mcoverage/[m
+[32m+[m
+[32m+[m[32m# nyc test coverage[m
+[32m+[m[32m.nyc_output[m
+[32m+[m
+[32m+[m[32m# Dependency directories[m
+[32m+[m[32mjspm_packages/[m
+[32m+[m
+[32m+[m[32m# Optional npm cache directory[m
+[32m+[m[32m.npm[m
+[32m+[m
+[32m+[m[32m# Optional REPL history[m
+[32m+[m[32m.node_repl_history[m
+[32m+[m
+[32m+[m[32m# Output of 'npm pack'[m
+[32m+[m[32m*.tgz[m
+[32m+[m
+[32m+[m[32m# Yarn Integrity file[m
+[32m+[m[32m.yarn-integrity[m
+[32m+[m
+[32m+[m[32m# parcel-bundler cache (https://parceljs.org/)[m
+[32m+[m[32m.cache[m
+[32m+[m[32m.parcel-cache[m
+[32m+[m
+[32m+[m[32m# next.js build output[m
+[32m+[m[32m.next[m
+[32m+[m
+[32m+[m[32m# nuxt.js build output[m
+[32m+[m[32m.nuxt[m
+[32m+[m
+[32m+[m[32m# vuepress build output[m
+[32m+[m[32m.vuepress/dist[m
+[32m+[m
+[32m+[m[32m# Serverless directories[m
+[32m+[m[32m.serverless[m
+[32m+[m
+[32m+[m[32m# FuseBox cache[m
+[32m+[m[32m.fusebox/[m
+[32m+[m
+[32m+[m[32m# DynamoDB Local files[m
+[32m+[m[32m.dynamodb/[m
+[32m+[m
+[32m+[m[32m# TernJS port file[m
+[32m+[m[32m.tern-port[m
+[1mdiff --git a/README.md b/README.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..a1d3145[m
+[1m--- /dev/null[m
+[1m+++ b/README.md[m
+[36m@@ -0,0 +1,133 @@[m
+[32m+[m[32m# PNG图像标注工具[m
+[32m+[m
+[32m+[m[32m一个基于React的图像标注工具，支持PNG图像的矩形框标注功能。[m
+[32m+[m
+[32m+[m[32m## 功能特性[m
+[32m+[m
+[32m+[m[32m- 📁 JSON文件上传：解析包含PNG图像路径的JSON文件[m
+[32m+[m[32m- 🖼️ 图像列表显示：左侧显示所有上传的图像缩略图[m
+[32m+[m[32m- 🎯 图像标注：右侧显示选中图像，支持矩形框标注[m
+[32m+[m[32m- 🏷️ 类别管理：独立的类别设置页面，支持自定义类别和颜色[m
+[32m+[m[32m- 💾 数据持久化：类别设置自动保存到本地存储[m
+[32m+[m[32m- 📤 标注导出：支持导出单个图像的标注数据为JSON文件[m
+[32m+[m
+[32m+[m[32m## 安装和运行[m
+[32m+[m
+[32m+[m[32m### 前置要求[m
+[32m+[m
+[32m+[m[32m- Node.js (版本 14 或更高)[m
+[32m+[m[32m- npm 或 yarn[m
+[32m+[m
+[32m+[m[32m### 安装依赖[m
+[32m+[m
+[32m+[m[32m```bash[m
+[32m+[m[32mnpm install[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### 启动开发服务器[m
+[32m+[m
+[32m+[m[32m```bash[m
+[32m+[m[32mnpm start[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m应用将在 http://localhost:3000 启动[m
+[32m+[m
+[32m+[m[32m### 构建生产版本[m
+[32m+[m
+[32m+[m[32m```bash[m
+[32m+[m[32mnpm run build[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## 使用方法[m
+[32m+[m
+[32m+[m[32m### 1. 上传JSON文件[m
+[32m+[m
+[32m+[m[32m在主页面上方点击"选择JSON文件"按钮，上传包含PNG图像路径的JSON文件。[m
+[32m+[m
+[32m+[m[32m支持的JSON格式示例：[m
+[32m+[m
+[32m+[m[32m```json[m
+[32m+[m[32m// 格式1：直接数组[m
+[32m+[m[32m["path/to/image1.png", "path/to/image2.png"][m
+[32m+[m
+[32m+[m[32m// 格式2：包含images字段[m
+[32m+[m[32m{[m
+[32m+[m[32m  "images": ["path/to/image1.png", "path/to/image2.png"][m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// 格式3：包含paths字段[m
+[32m+[m[32m{[m
+[32m+[m[32m  "paths": ["path/to/image1.png", "path/to/image2.png"][m
+[32m+[m[32m}[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### 2. 设置标注类别[m
+[32m+[m
+[32m+[m[32m点击页面顶部的"类别设置"链接，进入类别管理页面：[m
+[32m+[m
+[32m+[m[32m- 添加新类别：输入类别名称，选择颜色，点击"添加类别"[m
+[32m+[m[32m- 编辑类别：点击类别右侧的"编辑"按钮[m
+[32m+[m[32m- 删除类别：点击类别右侧的"删除"按钮[m
+[32m+[m
+[32m+[m[32m### 3. 进行图像标注[m
+[32m+[m
+[32m+[m[32m1. 在左侧图像列表中选择要标注的图像[m
+[32m+[m[32m2. 在右侧标注区域选择标注类别[m
+[32m+[m[32m3. 在图像上点击并拖拽创建矩形标注框[m
+[32m+[m[32m4. 点击"显示标注列表"查看所有标注[m
+[32m+[m[32m5. 点击"导出标注"下载标注数据[m
+[32m+[m
+[32m+[m[32m## 项目结构[m
+[32m+[m
+[32m+[m[32m```[m
+[32m+[m[32msrc/[m
+[32m+[m[32m├── components/          # React组件[m
+[32m+[m[32m│   ├── FileUpload.js   # 文件上传组件[m
+[32m+[m[32m│   ├── ImageList.js    # 图像列表组件[m
+[32m+[m[32m│   ├── ImageAnnotation.js # 图像标注组件[m
+[32m+[m[32m│   └── CategorySettings.js # 类别设置组件[m
+[32m+[m[32m├── context/            # React Context[m
+[32m+[m[32m│   ├── ImageContext.js # 图像数据管理[m
+[32m+[m[32m│   └── CategoryContext.js # 类别数据管理[m
+[32m+[m[32m├── App.js             # 主应用组件[m
+[32m+[m[32m├── index.js           # 应用入口[m
+[32m+[m[32m└── index.css          # 全局样式[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## 技术栈[m
+[32m+[m
+[32m+[m[32m- **React 18** - 用户界面框架[m
+[32m+[m[32m- **React Router** - 路由管理[m
+[32m+[m[32m- **React Context** - 状态管理[m
+[32m+[m[32m- **Canvas API** - 图像标注绘制[m
+[32m+[m[32m- **LocalStorage** - 数据持久化[m
+[32m+[m
+[32m+[m[32m## 浏览器支持[m
+[32m+[m
+[32m+[m[32m- Chrome (推荐)[m
+[32m+[m[32m- Firefox[m
+[32m+[m[32m- Safari[m
+[32m+[m[32m- Edge[m
+[32m+[m
+[32m+[m[32m## 注意事项[m
+[32m+[m
+[32m+[m[32m1. 图像文件路径需要是有效的URL或相对路径[m
+[32m+[m[32m2. 标注数据仅保存在浏览器内存中，刷新页面会丢失[m
+[32m+[m[32m3. 建议定期导出标注数据作为备份[m
+[32m+[m[32m4. 类别设置会自动保存到浏览器本地存储[m
+[32m+[m
+[32m+[m[32m## 开发说明[m
+[32m+[m
+[32m+[m[32m### 添加新功能[m
+[32m+[m
+[32m+[m[32m1. 在 `src/components/` 目录下创建新组件[m
+[32m+[m[32m2. 在 `src/context/` 目录下管理相关状态[m
+[32m+[m[32m3. 更新 `src/App.js` 中的路由配置[m
+[32m+[m
+[32m+[m[32m### 自定义样式[m
+[32m+[m
+[32m+[m[32m修改 `src/index.css` 文件中的CSS样式，支持响应式设计。[m
+[32m+[m
+[32m+[m[32m## 许可证[m
+[32m+[m
+[32m+[m[32mMIT License[m
+[1mdiff --git a/image.json b/image.json[m
+[1mnew file mode 100644[m
+[1mindex 0000000..cc4992c[m
+[1m--- /dev/null[m
+[1m+++ b/image.json[m
+[36m@@ -0,0 +1,8 @@[m
+[32m+[m[32m[[m
+[32m+[m[32m    "images/1.png",[m
+[32m+[m[32m    "images/2.png",[m
+[32m+[m[32m    "images/Screen Shot 2024-08-09 at 11.54.10.png",[m
+[32m+[m[32m    "images/Screen Shot 2024-08-16 at 17.30.36.png",[m
+[32m+[m[32m    "images/微信图片_20240808182455.png",[m
+[32m+[m[32m    "images/微信截图_20240522145148.png"[m
+[32m+[m[32m][m
+\ No newline at end of file[m
+[1mdiff --git a/package-lock.json b/package-lock.json[m
+[1mnew file mode 100644[m
+[1mindex 0000000..ce6ceb4[m
+[1m--- /dev/null[m
+[1m+++ b/package-lock.json[m
+[36m@@ -0,0 +1,20503 @@[m
+[32m+[m[32m{[m
+[32m+[m[32m  "name": "image-labeler",[m
+[32m+[m[32m  "version": "1.0.0",[m
+[32m+[m[32m  "lockfileVersion": 3,[m
+[32m+[m[32m  "requires": true,[m
+[32m+[m[32m  "packages": {[m
+[32m+[m[32m    "": {[m
+[32m+[m[32m      "name": "image-labeler",[m
+[32m+[m[32m      "version": "1.0.0",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@testing-library/jest-dom": "^5.16.4",[m
+[32m+[m[32m        "@testing-library/react": "^13.3.0",[m
+[32m+[m[32m        "@testing-library/user-event": "^13.5.0",[m
+[32m+[m[32m        "react": "^18.2.0",[m
+[32m+[m[32m        "react-dom": "^18.2.0",[m
+[32m+[m[32m        "react-image-label": "^1.0.0",[m
+[32m+[m[32m        "react-router-dom": "^6.3.0",[m
+[32m+[m[32m        "react-scripts": "5.0.1",[m
+[32m+[m[32m        "web-vitals": "^2.1.4"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@adobe/css-tools": {[m
+[32m+[m[32m      "version": "4.4.4",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@adobe/css-tools/-/css-tools-4.4.4.tgz",[m
+[32m+[m[32m      "integrity": "sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==",[m
+[32m+[m[32m      "license": "MIT"[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@alloc/quick-lru": {[m
+[32m+[m[32m      "version": "5.2.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=10"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "funding": {[m
+[32m+[m[32m        "url": "https://github.com/sponsors/sindresorhus"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/code-frame": {[m
+[32m+[m[32m      "version": "7.27.1",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@babel/code-frame/-/code-frame-7.27.1.tgz",[m
+[32m+[m[32m      "integrity": "sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@babel/helper-validator-identifier": "^7.27.1",[m
+[32m+[m[32m        "js-tokens": "^4.0.0",[m
+[32m+[m[32m        "picocolors": "^1.1.1"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=6.9.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/compat-data": {[m
+[32m+[m[32m      "version": "7.28.4",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@babel/compat-data/-/compat-data-7.28.4.tgz",[m
+[32m+[m[32m      "integrity": "sha512-YsmSKC29MJwf0gF8Rjjrg5LQCmyh+j/nD8/eP7f+BeoQTKYqs9RoWbjGOdy0+1Ekr68RJZMUOPVQaQisnIo4Rw==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=6.9.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/core": {[m
+[32m+[m[32m      "version": "7.28.4",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@babel/core/-/core-7.28.4.tgz",[m
+[32m+[m[32m      "integrity": "sha512-2BCOP7TN8M+gVDj7/ht3hsaO/B/n5oDbiAyyvnRlNOs+u1o+JWNYTQrmpuNp1/Wq2gcFrI01JAW+paEKDMx/CA==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@babel/code-frame": "^7.27.1",[m
+[32m+[m[32m        "@babel/generator": "^7.28.3",[m
+[32m+[m[32m        "@babel/helper-compilation-targets": "^7.27.2",[m
+[32m+[m[32m        "@babel/helper-module-transforms": "^7.28.3",[m
+[32m+[m[32m        "@babel/helpers": "^7.28.4",[m
+[32m+[m[32m        "@babel/parser": "^7.28.4",[m
+[32m+[m[32m        "@babel/template": "^7.27.2",[m
+[32m+[m[32m        "@babel/traverse": "^7.28.4",[m
+[32m+[m[32m        "@babel/types": "^7.28.4",[m
+[32m+[m[32m        "@jridgewell/remapping": "^2.3.5",[m
+[32m+[m[32m        "convert-source-map": "^2.0.0",[m
+[32m+[m[32m        "debug": "^4.1.0",[m
+[32m+[m[32m        "gensync": "^1.0.0-beta.2",[m
+[32m+[m[32m        "json5": "^2.2.3",[m
+[32m+[m[32m        "semver": "^6.3.1"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=6.9.0"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "funding": {[m
+[32m+[m[32m        "type": "opencollective",[m
+[32m+[m[32m        "url": "https://opencollective.com/babel"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/core/node_modules/semver": {[m
+[32m+[m[32m      "version": "6.3.1",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/semver/-/semver-6.3.1.tgz",[m
+[32m+[m[32m      "integrity": "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==",[m
+[32m+[m[32m      "license": "ISC",[m
+[32m+[m[32m      "bin": {[m
+[32m+[m[32m        "semver": "bin/semver.js"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/eslint-parser": {[m
+[32m+[m[32m      "version": "7.28.4",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@babel/eslint-parser/-/eslint-parser-7.28.4.tgz",[m
+[32m+[m[32m      "integrity": "sha512-Aa+yDiH87980jR6zvRfFuCR1+dLb00vBydhTL+zI992Rz/wQhSvuxjmOOuJOgO3XmakO6RykRGD2S1mq1AtgHA==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@nicolo-ribaudo/eslint-scope-5-internals": "5.1.1-v1",[m
+[32m+[m[32m        "eslint-visitor-keys": "^2.1.0",[m
+[32m+[m[32m        "semver": "^6.3.1"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": "^10.13.0 || ^12.13.0 || >=14.0.0"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "peerDependencies": {[m
+[32m+[m[32m        "@babel/core": "^7.11.0",[m
+[32m+[m[32m        "eslint": "^7.5.0 || ^8.0.0 || ^9.0.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/eslint-parser/node_modules/eslint-visitor-keys": {[m
+[32m+[m[32m      "version": "2.1.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/eslint-visitor-keys/-/eslint-visitor-keys-2.1.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-0rSmRBzXgDzIsD6mGdJgevzgezI534Cer5L/vyMX0kHzT/jiB43jRhd9YUlMGYLQy2zprNmoT8qasCGtY+QaKw==",[m
+[32m+[m[32m      "license": "Apache-2.0",[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=10"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/eslint-parser/node_modules/semver": {[m
+[32m+[m[32m      "version": "6.3.1",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/semver/-/semver-6.3.1.tgz",[m
+[32m+[m[32m      "integrity": "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==",[m
+[32m+[m[32m      "license": "ISC",[m
+[32m+[m[32m      "bin": {[m
+[32m+[m[32m        "semver": "bin/semver.js"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/generator": {[m
+[32m+[m[32m      "version": "7.28.3",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@babel/generator/-/generator-7.28.3.tgz",[m
+[32m+[m[32m      "integrity": "sha512-3lSpxGgvnmZznmBkCRnVREPUFJv2wrv9iAoFDvADJc0ypmdOxdUtcLeBgBJ6zE0PMeTKnxeQzyk0xTBq4Ep7zw==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@babel/parser": "^7.28.3",[m
+[32m+[m[32m        "@babel/types": "^7.28.2",[m
+[32m+[m[32m        "@jridgewell/gen-mapping": "^0.3.12",[m
+[32m+[m[32m        "@jridgewell/trace-mapping": "^0.3.28",[m
+[32m+[m[32m        "jsesc": "^3.0.2"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=6.9.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/helper-annotate-as-pure": {[m
+[32m+[m[32m      "version": "7.27.3",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@babel/helper-annotate-as-pure/-/helper-annotate-as-pure-7.27.3.tgz",[m
+[32m+[m[32m      "integrity": "sha512-fXSwMQqitTGeHLBC08Eq5yXz2m37E4pJX1qAU1+2cNedz/ifv/bVXft90VeSav5nFO61EcNgwr0aJxbyPaWBPg==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@babel/types": "^7.27.3"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=6.9.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/helper-compilation-targets": {[m
+[32m+[m[32m      "version": "7.27.2",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@babel/helper-compilation-targets/-/helper-compilation-targets-7.27.2.tgz",[m
+[32m+[m[32m      "integrity": "sha512-2+1thGUUWWjLTYTHZWK1n8Yga0ijBz1XAhUXcKy81rd5g6yh7hGqMp45v7cadSbEHc9G3OTv45SyneRN3ps4DQ==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@babel/compat-data": "^7.27.2",[m
+[32m+[m[32m        "@babel/helper-validator-option": "^7.27.1",[m
+[32m+[m[32m        "browserslist": "^4.24.0",[m
+[32m+[m[32m        "lru-cache": "^5.1.1",[m
+[32m+[m[32m        "semver": "^6.3.1"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=6.9.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/helper-compilation-targets/node_modules/semver": {[m
+[32m+[m[32m      "version": "6.3.1",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/semver/-/semver-6.3.1.tgz",[m
+[32m+[m[32m      "integrity": "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==",[m
+[32m+[m[32m      "license": "ISC",[m
+[32m+[m[32m      "bin": {[m
+[32m+[m[32m        "semver": "bin/semver.js"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/@babel/helper-create-class-features-plugin": {[m
+[32m+[m[32m      "version": "7.28.3",[m
+[32m+[m[32m      "resolved": "https://registry.npmmirror.com/@babel/helper-create-class-features-plugin/-/helper-create-class-features-plugin-7.28.3.tgz",[m
+[32m+[m[32m      "integrity": "sha512-V9f6ZFIYSLNEbuGA/92uOvYsGCJNsuA8ESZ4ldc09bWk/j8H8TKiPw8Mk1eG6olpnO0ALHJmYfZvF4MEE4gajg==",[m
+[32m+[m[32m      "license": "MIT",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "@babel/helper-annotate-as-pure": "^7.27.3",[m
+[32m+[m[32m        "@babel/helper-member-expression-to-functions": "^7.27.1",[m
+[32m+[m[32m        "@babel/helper-optimise-call-expression": "^7.27.1",[m
+[32m+[m[32m        "@babel/helper-replace-supers": "^7.27.1",[m
+[32m+[m[32m        "@babel/helper-skip-transparent-expression-wrappers": "^7.27.1",[m
+[32m+[m[32m        "@babel/traverse": "^7.28.3",[m
+[32m+[m[32m        "semver": "^6.3.1"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[

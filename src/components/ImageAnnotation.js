@@ -3,33 +3,54 @@ import { useImages } from '../context/ImageContext';
 import { useCategories } from '../context/CategoryContext';
 
 const ImageAnnotation = ({ selectedImage }) => {
-  const { addAnnotation, updateAnnotation, deleteAnnotation } = useImages();
+  const { images, addAnnotation, updateAnnotation, deleteAnnotation } = useImages();
   const { categories } = useCategories();
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentRect, setCurrentRect] = useState(null);
   const [pendingAnnotation, setPendingAnnotation] = useState(null);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [optimisticAnnotation, setOptimisticAnnotation] = useState(null);
+  const [targetAnnotationCount, setTargetAnnotationCount] = useState(null);
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [forceRedraw, setForceRedraw] = useState(0);
 
+  // 始终通过 Context 中的最新图像对象进行渲染，确保注释变化会触发重绘
+  const activeImage = selectedImage
+    ? (images.find(img => img.path === selectedImage.path) || selectedImage)
+    : null;
+
   useEffect(() => {
-    if (selectedImage && imageLoaded) {
+    if (activeImage && imageLoaded) {
       drawAnnotations();
     }
-  }, [selectedImage, imageLoaded, selectedImage?.annotations?.length, categories, forceRedraw, pendingAnnotation]);
+  }, [activeImage, imageLoaded, activeImage?.annotations, categories, forceRedraw, pendingAnnotation, optimisticAnnotation]);
+
+  // 当 Context 中的注释数量达到期望值时，清除乐观渲染
+  useEffect(() => {
+    if (
+      targetAnnotationCount != null &&
+      activeImage &&
+      Array.isArray(activeImage.annotations) &&
+      activeImage.annotations.length >= targetAnnotationCount
+    ) {
+      setOptimisticAnnotation(null);
+      setTargetAnnotationCount(null);
+      setTimeout(() => drawAnnotations(), 0);
+    }
+  }, [activeImage?.annotations?.length, targetAnnotationCount]);
 
   const drawAnnotations = () => {
     const canvas = canvasRef.current;
-    if (!canvas || !selectedImage) return;
+    if (!canvas || !activeImage) return;
 
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // 绘制所有已确认的标注
-    if (selectedImage.annotations && selectedImage.annotations.length > 0) {
-      selectedImage.annotations.forEach((annotation, index) => {
+    if (activeImage.annotations && activeImage.annotations.length > 0) {
+      activeImage.annotations.forEach((annotation, index) => {
         const category = categories.find(cat => cat.id === annotation.categoryId);
         const color = category?.color || '#007bff';
         
@@ -81,6 +102,34 @@ const ImageAnnotation = ({ selectedImage }) => {
       ctx.strokeRect(pendingAnnotation.x, pendingAnnotation.y, pendingAnnotation.width, pendingAnnotation.height);
       ctx.restore(); // 恢复绘图状态
     }
+
+    // 绘制乐观标注：选择类别后立即以实线和对应颜色显示
+    if (optimisticAnnotation) {
+      const category = categories.find(cat => cat.id === optimisticAnnotation.categoryId);
+      const color = category?.color || '#007bff';
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.strokeRect(
+        optimisticAnnotation.x,
+        optimisticAnnotation.y,
+        optimisticAnnotation.width,
+        optimisticAnnotation.height
+      );
+
+      // 标签
+      ctx.fillStyle = color;
+      ctx.font = '12px Arial';
+      const label = category?.name || '未分类';
+      const textWidth = ctx.measureText(label).width;
+      const labelHeight = 18;
+      ctx.fillRect(optimisticAnnotation.x, Math.max(0, optimisticAnnotation.y - labelHeight), textWidth + 8, labelHeight);
+      ctx.fillStyle = 'white';
+      ctx.fillText(label, optimisticAnnotation.x + 4, Math.max(12, optimisticAnnotation.y - 4));
+      ctx.restore();
+    }
   };
 
   const handleImageLoad = () => {
@@ -104,7 +153,7 @@ const ImageAnnotation = ({ selectedImage }) => {
   };
 
   const handleMouseDown = (e) => {
-    if (!selectedImage) return;
+    if (!activeImage) return;
     
     const pos = getMousePos(e);
     setIsDrawing(true);
@@ -161,7 +210,7 @@ const ImageAnnotation = ({ selectedImage }) => {
 
   const handleAnnotationClick = (annotation) => {
     if (window.confirm('是否删除此标注？')) {
-      deleteAnnotation(selectedImage.path, annotation.id);
+      deleteAnnotation(activeImage.path, annotation.id);
       // 强制重新绘制
       setForceRedraw(prev => prev + 1);
       setTimeout(() => drawAnnotations(), 0);
@@ -171,20 +220,27 @@ const ImageAnnotation = ({ selectedImage }) => {
   const handleCategorySelect = (categoryId) => {
     if (pendingAnnotation) {
       const category = categories.find(cat => cat.id === categoryId);
-      addAnnotation(selectedImage.path, {
+      const newAnnotation = {
         ...pendingAnnotation,
         categoryId: categoryId,
         categoryName: category?.name || '未分类'
-      });
+      };
+
+      // 先乐观渲染，立即显示
+      setOptimisticAnnotation(newAnnotation);
+      setTargetAnnotationCount((activeImage?.annotations?.length || 0) + 1);
+
+      // 关闭弹窗并清除待确认框（避免继续显示虚线）
+      setShowCategoryModal(false);
+      setPendingAnnotation(null);
+
+      // 触发 Context 更新
+      addAnnotation(activeImage.path, newAnnotation);
       
       // 强制重新绘制
       setForceRedraw(prev => prev + 1);
       setTimeout(() => drawAnnotations(), 0);
     }
-    setShowCategoryModal(false);
-    setPendingAnnotation(null);
-    // 立即重绘以清除待确认的标注
-    setTimeout(() => drawAnnotations(), 0);
   };
 
   const handleCancelAnnotation = () => {
@@ -194,7 +250,7 @@ const ImageAnnotation = ({ selectedImage }) => {
     setTimeout(() => drawAnnotations(), 0);
   };
 
-  if (!selectedImage) {
+  if (!activeImage) {
     return (
       <div className="annotation-area">
         <div className="no-image">
@@ -207,15 +263,15 @@ const ImageAnnotation = ({ selectedImage }) => {
   return (
     <div className="annotation-area">
       <div className="annotation-header">
-        <h3>{selectedImage.name}</h3>
+        <h3>{activeImage.name}</h3>
       </div>
 
       <div className="annotation-content">
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <img
             ref={imageRef}
-            src={selectedImage.path}
-            alt={selectedImage.name}
+            src={activeImage.path}
+            alt={activeImage.name}
             className="current-image"
             onLoad={handleImageLoad}
             onError={(e) => {

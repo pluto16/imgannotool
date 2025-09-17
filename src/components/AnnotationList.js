@@ -3,16 +3,23 @@ import { useImages } from '../context/ImageContext';
 import { useCategories } from '../context/CategoryContext';
 
 const AnnotationList = ({ selectedImage }) => {
-  const { deleteAnnotation } = useImages();
+  const { images, deleteAnnotation } = useImages();
   const { categories } = useCategories();
+
+  // 使用 Context 中的最新图像对象，确保标注变化后列表及时刷新
+  const activeImage = selectedImage
+    ? (images.find(img => img.path === selectedImage.path) || selectedImage)
+    : null;
 
   const handleAnnotationClick = (annotation) => {
     if (window.confirm('是否删除此标注？')) {
-      deleteAnnotation(selectedImage.path, annotation.id);
+      if (activeImage) {
+        deleteAnnotation(activeImage.path, annotation.id);
+      }
     }
   };
 
-  if (!selectedImage) {
+  if (!activeImage) {
     return (
       <div className="annotation-sidebar">
         <div className="annotation-list">
@@ -34,7 +41,7 @@ const AnnotationList = ({ selectedImage }) => {
     );
   }
 
-  const annotations = selectedImage.annotations || [];
+  const annotations = activeImage.annotations || [];
 
   return (
     <div className="annotation-sidebar">
