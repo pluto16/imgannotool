@@ -7,16 +7,18 @@ const ImageAnnotation = ({ selectedImage }) => {
   const { categories } = useCategories();
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentRect, setCurrentRect] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [pendingAnnotation, setPendingAnnotation] = useState(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [forceRedraw, setForceRedraw] = useState(0);
 
   useEffect(() => {
     if (selectedImage && imageLoaded) {
       drawAnnotations();
     }
-  }, [selectedImage, imageLoaded]);
+  }, [selectedImage, imageLoaded, selectedImage?.annotations?.length, categories, forceRedraw, pendingAnnotation]);
 
   const drawAnnotations = () => {
     const canvas = canvasRef.current;
@@ -25,37 +27,59 @@ const ImageAnnotation = ({ selectedImage }) => {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 绘制所有标注
-    selectedImage.annotations?.forEach((annotation, index) => {
-      const category = categories.find(cat => cat.id === annotation.categoryId);
-      const color = category?.color || '#007bff';
-      
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(
-        annotation.x,
-        annotation.y,
-        annotation.width,
-        annotation.height
-      );
+    // 绘制所有已确认的标注
+    if (selectedImage.annotations && selectedImage.annotations.length > 0) {
+      selectedImage.annotations.forEach((annotation, index) => {
+        const category = categories.find(cat => cat.id === annotation.categoryId);
+        const color = category?.color || '#007bff';
+        
+        ctx.save(); // 保存当前绘图状态
+        
+        // 绘制矩形框（选择类别后：对应类别颜色，实线，线宽2像素）
+        ctx.strokeStyle = color; // 使用类别对应的颜色
+        ctx.lineWidth = 2; // 线宽2像素
+        ctx.setLineDash([]); // 实线样式
+        ctx.strokeRect(
+          annotation.x,
+          annotation.y,
+          annotation.width,
+          annotation.height
+        );
 
-      // 绘制标签
-      ctx.fillStyle = color;
-      ctx.font = '12px Arial';
-      const label = category?.name || `标注 ${index + 1}`;
-      const textWidth = ctx.measureText(label).width;
-      ctx.fillRect(annotation.x, annotation.y - 20, textWidth + 8, 20);
-      ctx.fillStyle = 'white';
-      ctx.fillText(label, annotation.x + 4, annotation.y - 6);
-    });
+        // 绘制标签背景
+        ctx.fillStyle = color;
+        ctx.font = '12px Arial';
+        const label = category?.name || `标注 ${index + 1}`;
+        const textWidth = ctx.measureText(label).width;
+        const labelHeight = 18;
+        ctx.fillRect(annotation.x, Math.max(0, annotation.y - labelHeight), textWidth + 8, labelHeight);
+        
+        // 绘制标签文字
+        ctx.fillStyle = 'white';
+        ctx.fillText(label, annotation.x + 4, Math.max(12, annotation.y - 4));
+        
+        ctx.restore(); // 恢复绘图状态
+      });
+    }
 
-    // 绘制当前正在绘制的矩形
+    // 绘制当前正在绘制的矩形（未选择类别前：红色虚线，线宽2像素）
     if (currentRect) {
-      ctx.strokeStyle = '#ff0000';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
+      ctx.save(); // 保存当前绘图状态
+      ctx.strokeStyle = '#ff0000'; // 红色
+      ctx.lineWidth = 2; // 线宽2像素
+      ctx.setLineDash([5, 5]); // 虚线样式
       ctx.strokeRect(currentRect.x, currentRect.y, currentRect.width, currentRect.height);
-      ctx.setLineDash([]);
+      ctx.restore(); // 恢复绘图状态
+    }
+
+    // 绘制待确认的标注（选择类别后但未确认前）
+    if (pendingAnnotation) {
+      ctx.save(); // 保存当前绘图状态
+      ctx.strokeStyle = '#ff0000'; // 红色
+      ctx.lineWidth = 2; // 线宽2像素
+      ctx.setLineDash([5, 5]); // 虚线样式
+      ctx.strokeRect(pendingAnnotation.x, pendingAnnotation.y, pendingAnnotation.width, pendingAnnotation.height);
+      ctx.restore(); // 恢复绘图状态
     }
   };
 
@@ -80,7 +104,7 @@ const ImageAnnotation = ({ selectedImage }) => {
   };
 
   const handleMouseDown = (e) => {
-    if (!selectedImage || !selectedCategory) return;
+    if (!selectedImage) return;
     
     const pos = getMousePos(e);
     setIsDrawing(true);
@@ -102,7 +126,7 @@ const ImageAnnotation = ({ selectedImage }) => {
       height: pos.y - currentRect.y
     };
     setCurrentRect(newRect);
-    drawAnnotations();
+    setTimeout(() => drawAnnotations(), 100);
   };
 
   const handleMouseUp = (e) => {
@@ -124,12 +148,11 @@ const ImageAnnotation = ({ selectedImage }) => {
         height: Math.abs(finalRect.height)
       };
 
-      const category = categories.find(cat => cat.id === selectedCategory);
-      addAnnotation(selectedImage.path, {
-        ...normalizedRect,
-        categoryId: selectedCategory,
-        categoryName: category?.name || '未分类'
-      });
+      // 保存待标注的矩形框，弹出类别选择
+      setPendingAnnotation(normalizedRect);
+      setShowCategoryModal(true);
+      // 立即重绘以显示待确认的标注
+      setTimeout(() => drawAnnotations(), 0);
     }
 
     setIsDrawing(false);
@@ -139,7 +162,36 @@ const ImageAnnotation = ({ selectedImage }) => {
   const handleAnnotationClick = (annotation) => {
     if (window.confirm('是否删除此标注？')) {
       deleteAnnotation(selectedImage.path, annotation.id);
+      // 强制重新绘制
+      setForceRedraw(prev => prev + 1);
+      setTimeout(() => drawAnnotations(), 100);
     }
+  };
+
+  const handleCategorySelect = (categoryId) => {
+    if (pendingAnnotation) {
+      const category = categories.find(cat => cat.id === categoryId);
+      addAnnotation(selectedImage.path, {
+        ...pendingAnnotation,
+        categoryId: categoryId,
+        categoryName: category?.name || '未分类'
+      });
+      
+      // 强制重新绘制
+      setForceRedraw(prev => prev + 1);
+      setTimeout(() => drawAnnotations(), 100);
+    }
+    setShowCategoryModal(false);
+    setPendingAnnotation(null);
+    // 立即重绘以清除待确认的标注
+    setTimeout(() => drawAnnotations(), 100);
+  };
+
+  const handleCancelAnnotation = () => {
+    setShowCategoryModal(false);
+    setPendingAnnotation(null);
+    // 立即重绘以清除待确认的标注
+    setTimeout(() => drawAnnotations(), 100);
   };
 
   const exportAnnotations = () => {
@@ -170,19 +222,6 @@ const ImageAnnotation = ({ selectedImage }) => {
       <div className="annotation-header">
         <h3>{selectedImage.name}</h3>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="form-input"
-            style={{ width: '200px' }}
-          >
-            <option value="">选择标注类别</option>
-            {categories.map(category => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
           <button
             className="btn btn-success"
             onClick={exportAnnotations}
@@ -225,8 +264,8 @@ const ImageAnnotation = ({ selectedImage }) => {
               position: 'absolute',
               top: 0,
               left: 0,
-              cursor: selectedCategory ? 'crosshair' : 'default',
-              pointerEvents: selectedCategory ? 'auto' : 'none'
+              cursor: 'crosshair',
+              pointerEvents: 'auto'
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -235,19 +274,98 @@ const ImageAnnotation = ({ selectedImage }) => {
         </div>
 
 
-        {!selectedCategory && (
-          <div style={{ 
-            marginTop: '20px', 
-            padding: '10px', 
-            backgroundColor: '#fff3cd', 
-            border: '1px solid #ffeaa7', 
-            borderRadius: '4px',
-            color: '#856404'
-          }}>
-            请先选择标注类别，然后点击并拖拽图像来创建标注框
-          </div>
-        )}
+        <div style={{ 
+          marginTop: '20px', 
+          padding: '10px', 
+          backgroundColor: '#d1ecf1', 
+          border: '1px solid #bee5eb', 
+          borderRadius: '4px',
+          color: '#0c5460'
+        }}>
+          点击并拖拽图像来创建标注框，完成后选择类别
+        </div>
       </div>
+
+      {/* 类别选择模态框 */}
+      {showCategoryModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+            maxWidth: '400px',
+            width: '90%'
+          }}>
+            <h3 style={{ marginBottom: '20px', textAlign: 'center' }}>选择标注类别</h3>
+            <div style={{ marginBottom: '20px' }}>
+              {categories.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#666' }}>
+                  请先在类别设置页面添加类别
+                </p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+                  {categories.map(category => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategorySelect(category.id)}
+                      style={{
+                        padding: '15px',
+                        border: '2px solid #ddd',
+                        borderRadius: '6px',
+                        backgroundColor: 'white',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.borderColor = category.color;
+                        e.target.style.backgroundColor = category.color + '10';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.borderColor = '#ddd';
+                        e.target.style.backgroundColor = 'white';
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          backgroundColor: category.color,
+                          borderRadius: '3px'
+                        }}
+                      />
+                      <span>{category.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={handleCancelAnnotation}
+                className="btn btn-secondary"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
