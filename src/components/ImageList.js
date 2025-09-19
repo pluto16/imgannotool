@@ -7,39 +7,45 @@ const ImageList = ({ onImageSelect }) => {
 
   const handleImageClick = (image, index) => {
     setSelectedIndex(index);
-    onImageSelect(image);
+    onImageSelect(image, index);
   };
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        加载中...
+      <div className="image-list">
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          加载中...
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: '20px', color: 'red' }}>
-        错误: {error}
+      <div className="image-list">
+        <div style={{ padding: '20px', color: 'red' }}>
+          错误: {error}
+        </div>
       </div>
     );
   }
 
   if (images.length === 0) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-        请先上传JSON文件
+      <div className="image-list">
+        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+          请先上传JSON文件
+        </div>
       </div>
     );
   }
 
   return (
     <div className="image-list">
-      <div style={{ padding: '15px', borderBottom: '1px solid #eee', backgroundColor: '#f8f9fa' }}>
+      <div style={{ padding: '15px', borderBottom: '1px solid #eee', backgroundColor: '#f8f9fa', flexShrink: 0 }}>
         <h3>图像列表 ({images.length})</h3>
       </div>
-      <div style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {images.map((image, index) => (
           <div
             key={image.id}

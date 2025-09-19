@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useImages } from '../context/ImageContext';
 import { useCategories } from '../context/CategoryContext';
 
-const ImageAnnotation = ({ selectedImage }) => {
+const ImageAnnotation = ({ selectedImage, selectedImageIndex, onImageSelect }) => {
   const { images, addAnnotation, updateAnnotation, deleteAnnotation } = useImages();
   const { categories } = useCategories();
   const [isDrawing, setIsDrawing] = useState(false);
@@ -28,6 +28,27 @@ const ImageAnnotation = ({ selectedImage }) => {
   const activeImage = selectedImage
     ? (images.find(img => img.path === selectedImage.path) || selectedImage)
     : null;
+
+  // 图像切换功能
+  const handlePreviousImage = () => {
+    if (selectedImageIndex !== null && selectedImageIndex > 0) {
+      const prevIndex = selectedImageIndex - 1;
+      const prevImage = images[prevIndex];
+      if (prevImage) {
+        onImageSelect(prevImage, prevIndex);
+      }
+    }
+  };
+
+  const handleNextImage = () => {
+    if (selectedImageIndex !== null && selectedImageIndex < images.length - 1) {
+      const nextIndex = selectedImageIndex + 1;
+      const nextImage = images[nextIndex];
+      if (nextImage) {
+        onImageSelect(nextImage, nextIndex);
+      }
+    }
+  };
 
   useEffect(() => {
     if (activeImage && imageLoaded) {
@@ -491,7 +512,108 @@ const ImageAnnotation = ({ selectedImage }) => {
   return (
     <div className="annotation-area">
       <div className="annotation-header">
-        <h3>{activeImage.name}</h3>
+        {/* 图像切换导航栏 */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          marginBottom: '15px',
+          padding: '10px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '6px',
+          border: '1px solid #e9ecef'
+        }}>
+          <button
+            onClick={handlePreviousImage}
+            disabled={selectedImageIndex === null || selectedImageIndex === 0}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: selectedImageIndex === null || selectedImageIndex === 0 ? '#e9ecef' : '#007bff',
+              color: selectedImageIndex === null || selectedImageIndex === 0 ? '#6c757d' : 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: selectedImageIndex === null || selectedImageIndex === 0 ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (selectedImageIndex !== null && selectedImageIndex > 0) {
+                e.target.style.backgroundColor = '#0056b3';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedImageIndex !== null && selectedImageIndex > 0) {
+                e.target.style.backgroundColor = '#007bff';
+              }
+            }}
+          >
+            ← 上一张
+          </button>
+          
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px',
+            fontSize: '16px',
+            fontWeight: '500',
+            color: '#495057'
+          }}>
+            <span>第</span>
+            <span style={{ 
+              backgroundColor: '#007bff', 
+              color: 'white', 
+              padding: '4px 8px', 
+              borderRadius: '4px',
+              minWidth: '30px',
+              textAlign: 'center'
+            }}>
+              {selectedImageIndex !== null ? selectedImageIndex + 1 : 0}
+            </span>
+            <span>张 / 共</span>
+            <span style={{ 
+              backgroundColor: '#28a745', 
+              color: 'white', 
+              padding: '4px 8px', 
+              borderRadius: '4px',
+              minWidth: '30px',
+              textAlign: 'center'
+            }}>
+              {images.length}
+            </span>
+            <span>张</span>
+          </div>
+          
+          <button
+            onClick={handleNextImage}
+            disabled={selectedImageIndex === null || selectedImageIndex === images.length - 1}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: selectedImageIndex === null || selectedImageIndex === images.length - 1 ? '#e9ecef' : '#007bff',
+              color: selectedImageIndex === null || selectedImageIndex === images.length - 1 ? '#6c757d' : 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: selectedImageIndex === null || selectedImageIndex === images.length - 1 ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (selectedImageIndex !== null && selectedImageIndex < images.length - 1) {
+                e.target.style.backgroundColor = '#0056b3';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedImageIndex !== null && selectedImageIndex < images.length - 1) {
+                e.target.style.backgroundColor = '#007bff';
+              }
+            }}
+          >
+            下一张 →
+          </button>
+        </div>
+        
+        <h3 style={{ textAlign: 'center', margin: '10px 0' }}>{activeImage.name}</h3>
         {selectedAnnotation && (
           <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center' }}>
             <span style={{ color: '#666', fontSize: '14px' }}>
@@ -516,44 +638,53 @@ const ImageAnnotation = ({ selectedImage }) => {
       </div>
 
       <div className="annotation-content">
-        <div style={{ position: 'relative', display: 'inline-block' }}>
-          <img
-            ref={imageRef}
-            src={activeImage.path}
-            alt={activeImage.name}
-            className="current-image"
-            onLoad={handleImageLoad}
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.nextSibling.style.display = 'flex';
-            }}
-          />
-          <div 
-            style={{ 
-              display: 'none', 
-              width: '100%', 
-              height: '400px', 
-              backgroundColor: '#f0f0f0', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              color: '#999'
-            }}
-          >
-            无法加载图像
+        <div style={{ 
+          position: 'relative', 
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px'
+        }}>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <img
+              ref={imageRef}
+              src={activeImage.path}
+              alt={activeImage.name}
+              className="current-image"
+              onLoad={handleImageLoad}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div 
+              style={{ 
+                display: 'none', 
+                width: '100%', 
+                height: '400px', 
+                backgroundColor: '#f0f0f0', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: '#999',
+                borderRadius: '4px'
+              }}
+            >
+              无法加载图像
+            </div>
+            <canvas
+              ref={canvasRef}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                cursor: 'crosshair',
+                pointerEvents: 'auto'
+              }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+            />
           </div>
-          <canvas
-            ref={canvasRef}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              cursor: 'crosshair',
-              pointerEvents: 'auto'
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-          />
         </div>
       </div>
 

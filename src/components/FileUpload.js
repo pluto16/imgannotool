@@ -79,7 +79,7 @@ const FileUpload = () => {
           style={{ display: 'none' }}
         />
         <button 
-          className="btn btn-primary"
+          className="btn btn-primary btn-sm"
           onClick={handleButtonClick}
         >
           选择JSON文件
