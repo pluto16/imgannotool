@@ -36,20 +36,32 @@ function Navigation() {
 function MainPage() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleImageSelect = (image, index) => {
     setSelectedImage(image);
     setSelectedImageIndex(index);
   };
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   return (
     <div className="container">
       <div className="main-content">
-        <div className="sidebar">
+        <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div className="sidebar-header">
             <FileUpload />
+            <button 
+              className="collapse-btn"
+              onClick={toggleSidebar}
+              title={sidebarCollapsed ? "展开图像列表" : "折叠图像列表"}
+            >
+              {sidebarCollapsed ? '▶' : '◀'}
+            </button>
           </div>
-          <ImageList onImageSelect={handleImageSelect} />
+          {!sidebarCollapsed && <ImageList onImageSelect={handleImageSelect} />}
         </div>
         
         <div className="content-area">
